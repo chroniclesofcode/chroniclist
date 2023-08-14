@@ -7,11 +7,33 @@ namespace chroniclist {
 
 template <class T>
 class fast_list {
+private: 
+
+    typedef struct Node {
+        T value;
+        int prev;
+        int next;
+        bool is_empty;
+
+        /*
+        bool operator<(const Node o) const {
+            return value < o.value;
+        }
+        */
+
+        Node(T val, int prv, int nxt) : value{ val }, prev{ prv }, next{ nxt } { is_empty = false; }
+    } node_t;
+
 public:
+    static const int LNULL = -1;
+    int LIST_END = -1;
+
     fast_list() {
-        first = -1;
-        last = -1;
         _size = 0;
+        list.push_back({ -100, LNULL, LNULL });
+        LIST_END = 0;
+        first = LIST_END;
+        last = LIST_END;
     }
 
     ~fast_list() = default;
@@ -32,28 +54,93 @@ public:
         std::cout << "\n\n**** DEBUG END ****\n";
     }
 
-    void insert(int idx, T elem) {
-        if (idx == LIST_END) {
-            push_back(elem);
-            return;
-        } else if (idx == first) {
-            push_front(elem);
-            return;
-        } else if (list[idx].is_empty) { 
+    class iterator {
+        friend fast_list;
+        friend struct Node;
+    public:
+        using iterator_category = std::bidirectional_iterator_tag;
+        using value_type = T;
+        using reference = const T&;
+        using pointer =  std::vector<Node> &;
+        using difference_type = std::ptrdiff_t;
+
+        iterator(pointer ptr, int start, int end) : ptr(ptr), idx(start), _end(end) {}
+
+        auto operator*() const noexcept -> T& {
+            return ptr[idx].value;
+        }
+
+        auto operator++() noexcept -> iterator& {
+            idx = ptr[idx].next;
+            return *this;
+        }
+        auto operator++(int) noexcept -> iterator {
+            auto self = *this;
+            ++*this;
+            return self;
+        }
+        auto operator--() noexcept -> iterator& {
+            idx = ptr[idx].prev;
+            return *this;
+        }
+        auto operator--(int) noexcept -> iterator {
+            auto self = *this;
+            --*this;
+            return self;
+        }
+
+        friend auto operator==(const iterator &lhs, const iterator &rhs) noexcept -> bool {
+            return lhs.idx == rhs.idx;
+        }
+        friend auto operator!=(const iterator &lhs, const iterator &rhs) noexcept -> bool {
+            return lhs.idx != rhs.idx;
+        }
+
+    private:
+        pointer ptr;
+        int idx;
+        int _end;
+    };
+
+    iterator begin() {
+        return iterator(list, first, LIST_END);
+    }
+
+    iterator end() {
+        return iterator(list, LIST_END, LIST_END);
+    }
+
+    using reverse_iterator = std::reverse_iterator<iterator>;
+
+    reverse_iterator rbegin() noexcept {
+        return reverse_iterator(end());
+    }
+
+    reverse_iterator rend() noexcept {
+        return reverse_iterator(begin());
+    }
+
+    iterator insert(iterator it, T elem) {
+        return insert(it.idx, elem);
+    }
+
+    iterator insert(int idx, T elem) {
+        if (idx == LNULL || list[idx].is_empty) { 
             std::cout << "Invalid iterator\n";
             exit(1);
         }
+        int retit = LIST_END;
         if (empty_nodes.size() == 0) {
-            if (list.size() == 0) {
-                std::cout << "Cannot insert behind element for a list of size 0\n";
-                exit(1);
+            int to_add = list.size();
+            int prev = list[idx].prev;
+            retit = to_add;
+            list.push_back(node_t{ elem, prev, idx });
+            if (first == idx) {
+                first = to_add;
             } else {
-                int to_add = list.size();
-                int prev = list[idx].prev;
-                list.push_back(node_t{ elem, prev, idx });
                 list[prev].next = to_add;
-                list[idx].prev = to_add;
             }
+            list[idx].prev = to_add;
         } else {
             int to_fill = empty_nodes.back();
             empty_nodes.pop_back();
@@ -61,8 +148,13 @@ public:
                 std::cout << "Error: trying to remove node that is not empty\n";
                 exit(1);
             }
+            retit = to_fill;
             int prev = list[idx].prev;
-            list[prev].next = to_fill;
+            if (first == idx) {
+                first = to_fill;
+            } else {
+                list[prev].next = to_fill;
+            }
             list[to_fill].prev = prev;
             list[to_fill].next = idx;
             list[idx].prev = to_fill;
@@ -71,66 +163,15 @@ public:
             list[to_fill].is_empty = false;
         }
         _size++;
+        return iterator(list, retit, LIST_END);
     }
 
     void push_back(T elem) {
-        if (empty_nodes.size() == 0) {
-            if (list.size() == 0) {
-                list.push_back(node_t{ elem, LIST_END, LIST_END });
-                first = 0;
-                last = 0;
-            } else {
-                list[last].next = list.size();
-                int tmp = last;
-                last = list.size();
-                list.push_back(node_t{ elem, tmp, LIST_END });
-            }
-        } else {
-            int idx = empty_nodes.back();
-            empty_nodes.pop_back();
-            if (!list[idx].is_empty) {
-                std::cout << "Error: trying to remove node that is not empty\n";
-                exit(1);
-            }
-            list[last].next = idx;
-            int tmp = last;
-            last = idx;
-            list[last].value = elem;
-            list[last].prev = tmp;
-            list[last].next = LIST_END;
-            list[last].is_empty = false;
-        }
-        _size++;
+        insert(LIST_END, elem);
     }
 
     void push_front(T elem) {
-        if (empty_nodes.size() == 0) {
-            if (list.size() == 0) {
-                list.push_back(node_t{ elem, LIST_END, LIST_END });
-                first = 0;
-                last = 0;
-            } else {
-                list[first].prev = list.size();
-                int tmp = first;
-                first = list.size();
-                list.push_back(node_t{ elem, LIST_END, tmp });
-            }
-        } else {
-            int idx = empty_nodes.back();
-            empty_nodes.pop_back();
-            if (!list[idx].is_empty) {
-                std::cout << "Error: trying to remove node that is not empty\n";
-                exit(1);
-            }
-            list[first].prev = idx;
-            int tmp = first;
-            first = idx;
-            list[first].value = elem;
-            list[first].prev = LIST_END;
-            list[first].next = tmp;
-            list[first].is_empty = false;
-        }
-        _size++;
+        insert(first, elem);
     }
 
     void pop_back() {
@@ -138,7 +179,7 @@ public:
             std::cout << "Nothing to pop_back()!\n";
             exit(1);
         }
-        erase(last);
+        erase(list[last].prev);
     }
 
     void pop_front() {
@@ -150,23 +191,19 @@ public:
     }
 
     void erase(int idx) {
-        if (idx == LIST_END || list[idx].is_empty) {
+        if (idx == LNULL || idx == LIST_END || list[idx].is_empty) {
             return;
         }
         int prev = list[idx].prev;
         int next = list[idx].next;
-        if (prev != LIST_END) {
+        if (prev != LNULL) {
             list[prev].next = next;
         }
-        if (next != LIST_END) {
-            list[next].prev = prev;
-        }
+        list[next].prev = prev;
         if (first == idx) {
             first = next;
         }
-        if (last == idx) {
-            last = prev;
-        }
+
         empty_nodes.push_back(idx);
         list[idx].is_empty = true;
         _size--;
@@ -176,19 +213,26 @@ public:
         if (_size == 0) {
             list.clear();
             empty_nodes.clear();
+            list.push_back({ -100, LNULL, LNULL });
+            LIST_END = 0;
+            first = LIST_END;
+            last = LIST_END;
             return;
         }
         std::vector<node_t> redo;
         int head = first;
-        int prev = LIST_END;
+        redo.push_back({ -100, LNULL, LNULL });
+        LIST_END = 0;
+        int prev = 0;
         while (head != LIST_END) {
             redo.push_back(node_t{ list[head].value, prev, prev + 2 });
             prev++;
             head = list[head].next;
         }
         redo.back().next = LIST_END;
-        first = 0;
-        last = redo.size() - 1;
+        first = 1;
+        redo[first].prev = LNULL;
+        last = LIST_END;
         empty_nodes.clear();
         list = std::move(redo);
     }
@@ -198,34 +242,39 @@ public:
         if (_size == 0) {
             return;
         }
+        // Sorts depending on custom comparator
         std::sort(list.begin(), list.end(), [comparator](const node_t a, const node_t b) {
             if (!a.is_empty && b.is_empty) return true;
             if (a.is_empty && !b.is_empty) return false;
+            if (a.next == LNULL) return true; 
+            if (b.next == LNULL) return false;
             return comparator(a.value, b.value);
         });
-
-        int prev = LIST_END;
-        int empties = LIST_END;
-        for (int i = 0; i < list.size(); i++) {
+        LIST_END = 0;
+        int prev = 0;
+        int empties = LNULL;
+        int pend = list.size() - 1;
+        for (int i = 1; i < list.size(); i++) {
+            // Sets empties var at the point where the empty nodes begin
             if (list[i].is_empty) {
                 list[i-1].next = LIST_END;
-                last = i-1;
                 empties = i;
+                pend = i - 1;
                 break;
             }
             list[i].prev = prev;
             list[i].next = prev + 2;
             prev = i;
         }
-        first = 0;
-
-        if (empties != LIST_END) {
+        first = 1; // LIST_END is always 0
+        list[first].prev = LNULL; // Aligns first node
+        list[prev].next = LIST_END; // Sets last elem to LIST_END
+        list[LIST_END].prev = pend; // Aligns end node
+        if (empties != LNULL) {
             empty_nodes.clear();
             for (int i = list.size() - 1; i >= empties; i--) {
                 empty_nodes.push_back(i);
             }
-        } else {
-            last = list.size() - 1;
         }
     }
 
@@ -238,26 +287,9 @@ public:
     }
 
 private:
-    typedef struct Node {
-        T value;
-        int prev;
-        int next;
-        bool is_empty;
-
-        /*
-        bool operator<(const Node o) const {
-            return value < o.value;
-        }
-        */
-
-        Node(T val, int prv, int nxt) : value{ val }, prev{ prv }, next{ nxt } { is_empty = false; }
-    } node_t;
-
     
     std::vector<node_t> list;
     std::vector<T> empty_nodes;
-
-    const int LIST_END = -1;
 
     int first;
     int last;

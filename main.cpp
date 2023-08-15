@@ -116,7 +116,6 @@ int main(void) {
             standard_traverse.printStats();
         }
 
-
     } else {
         chroniclist::fast_list<int> fl;
         fl.push_front(69);

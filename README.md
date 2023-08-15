@@ -20,3 +20,4 @@ TO-DO:
 FIXES:
 - Fixed difficult-to-find bugs regarding the iterator
 - Added sentinel node for end() instead of weird behaviour
+- Copy constructor deleted since reference was used, changed to a pointer

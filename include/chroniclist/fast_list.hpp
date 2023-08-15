@@ -14,13 +14,6 @@ private:
         int prev;
         int next;
         bool is_empty;
-
-        /*
-        bool operator<(const Node o) const {
-            return value < o.value;
-        }
-        */
-
         Node(T val, int prv, int nxt) : value{ val }, prev{ prv }, next{ nxt } { is_empty = false; }
     } node_t;
 
@@ -61,17 +54,17 @@ public:
         using iterator_category = std::bidirectional_iterator_tag;
         using value_type = T;
         using reference = const T&;
-        using pointer =  std::vector<Node> &;
+        using pointer =  std::vector<Node> *;
         using difference_type = std::ptrdiff_t;
 
-        iterator(pointer ptr, int start, int end) : ptr(ptr), idx(start), _end(end) {}
+        iterator(pointer ptr, int start) : ptr(ptr), idx(start) {}
 
         auto operator*() const noexcept -> T& {
-            return ptr[idx].value;
+            return (*ptr)[idx].value;
         }
 
         auto operator++() noexcept -> iterator& {
-            idx = ptr[idx].next;
+            idx = (*ptr)[idx].next;
             return *this;
         }
         auto operator++(int) noexcept -> iterator {
@@ -80,7 +73,7 @@ public:
             return self;
         }
         auto operator--() noexcept -> iterator& {
-            idx = ptr[idx].prev;
+            idx = (*ptr)[idx].prev;
             return *this;
         }
         auto operator--(int) noexcept -> iterator {
@@ -99,15 +92,14 @@ public:
     private:
         pointer ptr;
         int idx;
-        int _end;
     };
 
     iterator begin() {
-        return iterator(list, first, LIST_END);
+        return iterator(&list, first);
     }
 
     iterator end() {
-        return iterator(list, LIST_END, LIST_END);
+        return iterator(&list, LIST_END);
     }
 
     using reverse_iterator = std::reverse_iterator<iterator>;
@@ -163,7 +155,7 @@ public:
             list[to_fill].is_empty = false;
         }
         _size++;
-        return iterator(list, retit, LIST_END);
+        return iterator(&list, retit);
     }
 
     void push_back(T elem) {
@@ -190,9 +182,9 @@ public:
         erase(first);
     }
 
-    void erase(int idx) {
+    iterator erase(int idx) {
         if (idx == LNULL || idx == LIST_END || list[idx].is_empty) {
-            return;
+            return iterator(&list, LIST_END);
         }
         int prev = list[idx].prev;
         int next = list[idx].next;
@@ -207,6 +199,11 @@ public:
         empty_nodes.push_back(idx);
         list[idx].is_empty = true;
         _size--;
+        return iterator(&list, next);
+    }
+
+    iterator erase(iterator it) {
+        return erase(it.idx);
     }
 
     void compact() {

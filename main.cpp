@@ -3,7 +3,7 @@
 #include "chroniclist/fast_list.hpp"
 #include "chroniclist/Timer.h"
 
-#define TIMER 1
+#define TIMER 0
 #define CHRONICLIST 0
 #define NTESTS 50
 
@@ -140,6 +140,8 @@ int main(void) {
         fl.debug(0);
 
         fl.sort(std::less<int>());
+        fl.debug(1);
+        fl.debug(0);
         auto beg = fl.begin();
         beg++;
         for (auto it = beg; it != fl.end(); it++) {

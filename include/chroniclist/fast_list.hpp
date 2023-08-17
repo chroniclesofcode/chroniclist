@@ -240,11 +240,11 @@ public:
             return;
         }
         // Sorts depending on custom comparator
-        std::sort(list.begin(), list.end(), [comparator](const node_t a, const node_t b) {
+        auto list_beg = list.begin();
+        list_beg++;
+        std::sort(list_beg, list.end(), [comparator](const node_t a, const node_t b) {
             if (!a.is_empty && b.is_empty) return true;
             if (a.is_empty && !b.is_empty) return false;
-            if (a.next == LNULL) return true; 
-            if (b.next == LNULL) return false;
             return comparator(a.value, b.value);
         });
         LIST_END = 0;

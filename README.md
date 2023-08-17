@@ -8,7 +8,7 @@ DONE:
 - erase() function
 - insert() function
 - Compact operation
-- Implement sort - empty nodes are filtered towards the end
+- Implement sort - empty nodes are filtered towards the end using a custom sort wrapper
 - Added custom comparator support (with a lambda wrapper)
 - LIST_END will always be a sentinel node at index 0
 - Implement iterators (concealed index)
@@ -23,6 +23,7 @@ FIXES:
 - Fixed difficult-to-find bugs regarding the iterator
 - Added sentinel node for end() instead of weird behaviour
 - Copy constructor deleted since reference was used, changed to a pointer
+- Made sort more efficient
 
 # Findings
 

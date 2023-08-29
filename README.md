@@ -46,6 +46,12 @@ tests that I have done. This includes pushing back 7 million ish integers,
 erasing in the middle of the list, inserting in the middle of the list, and
 general traversal. 
 
+There is also a control provided, which uses vectors instead. It is very clear that
+a vector is SIGNIFICANTLY faster by about 5x than our list, which make sense given
+that we have to do 5x the operations for an insert into our list. The traversal is
+also much faster - by about 3x, but all of these are within reason since our traversals
+cannot be optimized by the compiler/cpu very much.
+
 The implementation of my list is a vector of struct nodes, each node containing
 the template value. Since this is designed in a vector, we cannot use pointers
 (nor would I want to) to the next value, since these memory address will change

@@ -1,10 +1,12 @@
 #include <iostream>
 #include <list>
+#include <vector>
 #include "chroniclist/fast_list.hpp"
 #include "chroniclist/Timer.h"
 
-#define TIMER 0
-#define CHRONICLIST 0
+#define TIMER 1
+#define CHRONICLIST 2
+// NTESTS Usually 50
 #define NTESTS 50
 
 int main(void) {
@@ -12,7 +14,7 @@ int main(void) {
     if (TIMER) {
         const int COUNT = 5 * 1e7;
 
-        if (CHRONICLIST) {
+        if (CHRONICLIST == 1) {
             Timer mine("../stats/fast_list_insert.md");
             Timer mine_erase("../stats/fast_list_erase.md");
             Timer mine_randinsert("../stats/fast_list_randinsert.md");
@@ -64,7 +66,7 @@ int main(void) {
             mine_randinsert.printStats();
             mine_traverse.printStats();
 
-        } else {
+        } else if (CHRONICLIST == 0) {
             Timer standard("../stats/std_list_insert.md");
             Timer standard_erase("../stats/std_list_erase.md");
             Timer standard_randinsert("../stats/std_list_randinsert.md");
@@ -114,8 +116,32 @@ int main(void) {
             standard_erase.printStats();
             standard_randinsert.printStats();
             standard_traverse.printStats();
-        }
 
+        } else if (CHRONICLIST == 2) {
+            Timer standard("../stats/vector_insert.md");
+            Timer standard_traverse("../stats/vector_traverse.md");
+
+            for (int num = 0; num < NTESTS; num++) {
+                std::vector<int> stdl;
+
+                // Insert elements
+                standard.start();
+                for (int i = 0; i < COUNT; i++) {
+                    stdl.push_back(i);
+                }
+                standard.stop();
+
+                // Traverse the entire list again
+                long long ans = 0;
+                standard_traverse.start();
+                for (auto it = stdl.begin(); it != stdl.end(); it++) {
+                    ans += *it / (num+1);
+                }
+                standard_traverse.stop();
+            }
+            standard.printStats();
+            standard_traverse.printStats();
+        }
     } else {
         chroniclist::fast_list<int> fl;
         fl.push_front(69);
